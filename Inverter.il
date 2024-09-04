@@ -51,6 +51,25 @@ dbCreateParamInst(
 ))
 
 dbClose(tranId_p)
+Bulk_pmos=dbOpenCellViewByType("test_Pcells" "psub" "layout")
+
+dbCreateParamInst(
+	pcCellView Bulk_pmos "psub1" (0:0) "R0" 1
+	list(
+	list("width" "float" pwidth)
+	list("length" "float" 2.0)
+))
+dbClose(Bulk_pmos)
+Bulk_nmos=dbOpenCellViewByType("test_Pcells" "nsub" "layout")
+
+dbCreateParamInst(
+	pcCellView Bulk_nmos "nsub1" (0:0) "R0" 1
+	list(
+	list("width" "float" nwidth)
+	list("length" "float" 2.0)
+))
+dbClose(Bulk_nmos)
+;ROD Objects
 
 nTranObj=rodGetObj("ntran1")
 
@@ -67,6 +86,10 @@ pGateObj=rodGetObj("ptran1/gate")
 pDrainObj=rodGetObj("ptran1/drain")
 
 pSourceObj=rodGetObj("ptran1/source")
+nBulkTran=rodGetObj("nsub1")
+nBulk=rodGetObj("nsub1/bulk")
+pBulkTran=rodGetObj("psub1")
+pBulk=rodGetObj("psub1/bulk")
 
 ;Calculate min height 
 
@@ -94,7 +117,7 @@ pwrObj=rodCreateRect(
 		?pin t
 		?termName powerName
 		?layer list("metal1" "drawing")
-		?width cellWidth
+		?width cellWidth+pBulkTran~>length
 		?length pwrWidth
 )
 
@@ -105,7 +128,7 @@ gndObj=rodCreateRect(
 		?pin t
 		?termName groundName
 		?layer list("metal1" "drawing")
-		?width cellWidth
+		?width cellWidth+pBulkTran~>length
 		?length gndWidth
 )
 
@@ -129,6 +152,13 @@ align_pmos_vdd=rodAlign(
 						pDrainObj~>upperCenter))-metalMetalSep
 		?maintain nil
 )
+;align PMOS Bulk to Pmos
+rodAlign(
+	?alignObj pBulk
+	?alignHandle "upperRight"
+	?refObj pSourceObj
+	?refHandle "upperLeft"
+)
 ;align NMOS with gnd rail
 align_nmos_gnd=rodAlign(
 		?alignObj nTranObj
@@ -136,6 +166,13 @@ align_nmos_gnd=rodAlign(
 		?refObj gndObj
 		?refHandle "upperCenter"
 		?ySep rodPointY(rodSubPoints(nTranObj~>lowerCenter nDrainObj~>lowerCenter))+metalMetalSep
+)
+;align NMOS Bulk to Nmos
+rodAlign(
+	?alignObj nBulk
+	?alignHandle "upperRight"
+	?refObj nSourceObj
+	?refHandle "upperLeft"
 )
 ;create gate connection b/w pmos and nmos transistor
 gateConnObj = rodCreatePath(
