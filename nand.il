@@ -78,6 +78,25 @@ dbCreateParamInst(
 	)
 )
 dbClose(tranId_pB)
+Bulk_pmos=dbOpenCellViewByType("test_Pcells" "psub" "layout")
+
+dbCreateParamInst(
+	pcCellView Bulk_pmos "psub1" (0:0) "R0" 1
+	list(
+	list("width" "float" pWidth)
+	list("length" "float" 2.0)
+))
+dbClose(Bulk_pmos)
+Bulk_nmos=dbOpenCellViewByType("test_Pcells" "nsub" "layout")
+
+dbCreateParamInst(
+	pcCellView Bulk_nmos "nsub1" (0:0) "R0" 1
+	list(
+	list("width" "float" nWidth)
+	list("length" "float" 2.0)
+))
+dbClose(Bulk_nmos)
+
 ;Get the ROD objects
 ;NMOSA
 nATranObj=rodGetObj("ntran_A")
@@ -99,6 +118,10 @@ pBTranObj=rodGetObj("ptran_B")
 pBGateObj=rodGetObj("ptran_B/gate")
 pBDrainObj=rodGetObj("ptran_B/drain")
 pBSourceObj=rodGetObj("ptran_B/source")
+nBulkTran=rodGetObj("nsub1")
+nBulk=rodGetObj("nsub1/bulk")
+pBulkTran=rodGetObj("psub1")
+pBulk=rodGetObj("psub1/bulk")
 
 ;calculate minimum Height
 minHeight=25
@@ -165,6 +188,13 @@ rodAlign(
                                       pBSourceObj~>upperCenter)) - metalMetalSep
          ?maintain nil
 )
+;align PMOS Bulk to Pmos
+rodAlign(
+	?alignObj pBulk
+	?alignHandle "upperRight"
+	?refObj pBSourceObj
+	?refHandle "upperLeft"
+)
 ;align NMOSA-S to NMOSB-D
 align_NMOSAB=rodAlign(
 	?alignObj nASourceObj
@@ -182,7 +212,12 @@ rodAlign(
                                       nBDrainObj~>lowerCenter)) + metalMetalSep
         ?maintain nil
 )
-
+rodAlign(
+	?alignObj nBulk
+	?alignHandle "upperRight"
+	?refObj nBSourceObj
+	?refHandle "upperLeft"
+)
 ;Gate connection for B
 gateConnObjB=rodCreatePath(
 		?name "inputConn_B"
@@ -345,4 +380,3 @@ rodAlign(
 	?refHandle if(outputConnObj~>numSegments ==1 "centerCenter" "mid1")
 )
 ))
-
